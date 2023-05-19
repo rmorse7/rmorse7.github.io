@@ -1,12 +1,12 @@
 ---
 layout: blog
 title:  "Simulating Voter Errors with ACT-R"
-date:   2023-05-19 09:28:01 -0600
+date:   2022-11-07 21:26:21 -0600
 permalink: /voting/
-last_modified_at: 2023-05-19
+last_modified_at: 2022-12-11
 ---
 
-Badly designed ballots are a pressing issue in the U.S. and have already swung multiple elections. For instance, consider the following ballot:
+Badly designed ballots may not seem like a pressing problem, but they have already swung multiple elections. For instance, consider the following ballot:
 
 <img src="/assets/images/Butterfly.jpeg" style="display:block; margin-left: auto; margin-right: auto;" width="600">
 
@@ -16,7 +16,7 @@ This isn't the only time bad ballot design has swung a presidential election. Mo
 
 Enter [ACT-R](http://act-r.psy.cmu.edu/) and [Rice's Human Computer Interaction (HCI) Lab's voting project](https://psychology.rice.edu/voting). ACT-R is a cognitive architecture---a system for writing programs that accurately simulate human behavior. All human biases and quirks are included as features, not bugs. The Rice HCI voting project seeks to use ACT-R to create a tool that can predict if a ballot will cause errors. The tool will accept a ballot, run thousands of simulated ACT-R voters on it, and then report any systematic errors the simulated voters make.
 
-While I was at Rice, I spent a year working in the HCI lab on this project. My main contribution was a prototype of a complete modular simulated voting system in ACT-R. Like many human activities, voting is actually composed of smaller pieces when examined closely. In our system, we broke voting down into:
+While I was at Rice, I spent a year working in the HCI lab on this project. My main contribution was a prototype of a [complete modular simulated voting system](https://github.com/JoshEngels/VotingModel) in ACT-R. Like many human activities, voting is actually composed of smaller pieces when examined closely. In our system, we broke voting down into:
 
 * Macronavigation: visual navigation between races
 * Visual Encoding: separating the components of a race into the title, candidates, and parties

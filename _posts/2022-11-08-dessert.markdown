@@ -1,0 +1,81 @@
+---
+layout: blog
+title:  "What is Set-of-Vector Search?"
+date:   2022-11-08 21:26:21 -0600
+permalink: /dessert/
+last_modified_at: 2022-12-11
+---
+
+The set-of-vector search problem is an exciting and unexplored research problem. In our recent paper, we develop [DESSERT](https://arxiv.org/pdf/2210.15748.pdf), a novel algorithm to efficiently solve set-of-vector search. In this blog post, I'll first give a primer on traditional nearest neighbor search, and then I'll dive into a detailed explanation of set-of-vector search. In the rest of the post talk about interesting problems that can be solved with set-of-vector search and do a deep dive into the intuition behind DESSERT. 
+
+## The Traditional Nearest Neighbor Problem
+
+In the traditional nearest neighbor problem, we are given a dataset $$D$$ of $$N$$ $$d$$-dimensional vectors. Our goal is to build an index that can quickly find the "closest" vector (the nearest neighbor) in $$D$$ to an arbitrary $$d$$-dimensional query vector $$q$$. Here, we define "closest" as the vector in $$D$$ that maximizes a similarity function $$sim(q, v_i)$$ for $$v_i$$ in $$D$$. Common choices for $$sim$$ include Euclidean similarity, cosine similarity, and Jaccard similarity.
+
+The picture below shows an example of a nearest neighbor problem with $$d=2$$, with a sample query in orange and the various points in $$D$$ in other colors. The nearest neighbor to the sample query is the blue point, assuming $$sim$$ is Euclidean similarity $$sim_E$$.
+
+<img src="/assets/images/nn.svg" style="display:block; margin-left: auto; margin-right: auto;" width="400">
+
+## The Set-of-Vector Search Problem
+
+In the set-of-vector search problem (AKA vector set search with vector set queries), we are given a dataset $$D$$ consisting of $$N$$ *sets* of vectors. Each set, $$X_i$$, consists of $$m_i$$ $$d$$-dimensional vectors. Our goal is to build an index that can quickly find the "closest" set $$X_i$$ in $$D$$ to an arbitrary query vector set $$Q$$, where $$Q$$ consists of $$m_q$$ $$d$$-dimensional vectors. Here, "closest" means the set in $$D$$ that maximizes a "set relevance" function[^1] $$f(Q, X_i)$$ for $$X_i$$ in $$D$$. We note that the set-of-vector search problem reduces to the traditional nearest neighbor problem when $$m_q = 1$$ and $$m_i = 1$$ for all $$i$$. Finally, we introduce the notation $$X_{i, j}$$ to denote the $$j$$th vector in the $$i$$th set in $$D$$ and the notation $$Q_k$$ to denote the $$k$$'th vector in $$Q$$.
+
+The picture below shows an example of the set-of-vector search problem with $$d=2$$, with a sample query vector set in orange and the various vector sets in $$D$$ in other colors. The nearest neighbor to the query is the set of blue points, assuming $$f(Q, X_i) = \sum_k \max_j sim_E(Q_k, X_{i,j})$$ (in other words, the set relevance function is the "sum over $$k$$ of the max Euclidean similarity between $$Q_k$$ and any vector in $$X_i$$).
+
+<img src="/assets/images/set nn.svg" style="display:block; margin-left: auto; margin-right: auto;" width="600">
+
+## Applications
+
+First, let's talk about an *embedding model*. An embedding model is a machine learning model that has been trained to map the objects we want to search over (images, music, documents, products) into vectors (“embeddings”), such that similar items will have embeddings that are close together. By transforming all of the items we want to search over into embeddings, and doing the same for a query, we can find the most similar items to the query by finding the closest embeddings to the query embedding. 
+
+The image below is an example of an image embedding model that maps images into $$2$$ dimensional vectors. The embedding model maps the similar cat and dog images to similar $$(x,y)$$ positions while mapping the dissimilar orange very far away.
+
+<img src="/assets/images/animals.svg" style="display:block; margin-left: auto; margin-right: auto;" width="400">
+
+In practice, we tend to use higher dimensional embeddings than $$d=2$$ because they can better represent complicated objects. For example, a high dimensional image embedding might carry information about how alive the subject of the image is, what type of animal is in the image if it is alive, how big the image is, how many objects are in the image, etc. A $$2$$ dimensional embedding only gives us $$2$$ degrees of freedom to represent all of these qualities, while a higher dimensional embedding allows these qualities to all be represented on different axes in the space, giving a more rich representation of the image. Below are common search problems and some corresponding common embedding sizes.
+
+* Sentence and contextualized word embeddings: BERT embeddings have $$d = 768$$.
+* Image embeddings: SIFT and DEEP1B descriptors have $$d = 100$$.
+* Ad embeddings: DLRM embeddings have $$d = 128$$.
+* Product embeddings: DSSM embeddings have $$d = 256$$.
+
+These embedding search problems have been extensively analyzed through the lens of traditional nearest neighbor search. Next, we'll show how a few common embedding search problems might better fit into set-of-vector search.
+
+
+### Document Search
+
+Semantic document search is the problem of searching for the most relevant document to a query from a large corpus of documents based on the *meaning* of the query, not just it's lexical properties. This problem is commonly encountered in search engines and recommendation systems (Google search is at the end of the day semantic document search). The common benchmark used in academia is [MSMarco](https://microsoft.github.io/msmarco/), which is a collection of 3.2 million documents, queries, and their ground truth most relevant documents (there is also a similar dataset with 8.8 million smaller passages). 
+
+For the past few years, the best techniques have embedded each document into a single vector and performed traditional near neighbor search. However, recently [ColBERT](https://github.com/stanford-futuredata/ColBERT) achieved state-of-the-art performance on MSMarco by embedding each document into a set of vectors and then performing set-of-vector search. ColBERT uses BERT to embed each word in the document into a vector that captures the meaning of the word and its surrounding context and then performs a similar process on the query. Intuitively, this method is more effective at representing the entire document than a single vector because different vectors in the set can represent different parts of the sentences meaning, giving an overall richer representation of the document[^2].
+### Image Search
+
+Image search is the problem of searching for images in a collection that are similar to a given query image, where similar can mean the images look similar or are of similar objects. Traditionally, image search is performed by extracting a bad of features, either using hand-tuned algorithms like SIFT or convolutional neural networks, and the aggregating the vectors in some way for single vector similarity search. However, similar to document search, we argue that keeping the representation as a bag of vectors might increase image search performance.
+
+### Basket Completion
+
+Basket completion is a problem faced by online retailers, where the goal is to suggest additional items for a customer to purchase based on their current cart (or "basket") of items. For example, if a customer currently has a toothbrush, toothpaste, soap, a razor, and shampoo in their cart, a good basket completion suggestion might be conditioner or shaving cream. 
+
+Typical basket completion datasets have many prior baskets that customers have checked out with, and some basket completion algorithms search these prior baskets for similar baskets to the current customer's choices. A good way of searching for similar baskets to use for item completions may be to embed each item in the current basket into a vector, do the same for the dataset of baskets, and then perform set-of-vector search.
+## DESSERT
+
+The set-of-vector search process used in ColBERT is prohibitively slow on CPUs because it relies on an expensive matrix multiplication (this may also be why no one has tried using set-of-vector search in image search or basket retrieval). This bottleneck inspired us to build [DESSERT](https://arxiv.org/pdf/2210.15748.pdf), an *approximate* set-of-vector search algorithm. Approximate search algorithms have been extensively studied in the near neighbor search literature because they are much more tractable than exact near neighbor search as $$N$$ and $$d$$ grow large, and DESSERT continues in these footsteps in the more general problem.
+
+DESSERT can solve forms of the set relevance function $$f$$ that are the composition of two "set aggregation" or "variadic" functions, one over $$Q$$ and one over $$X_i$$. In other words, we restrict $$f$$ to functions of the form
+
+$$f(Q,X_i) = A_1(A_2(sim(q_k, x_j): x_j \in X_i): q_k \in Q)$$
+
+We note that the earlier "sum of max similarities" metric we defined above fits neatly into this definition, with $$A_1$$ as the "sum" set aggregation function and $$A_2$$ as the "max" set aggregation function.
+
+DESSERT works by *preindexing* each set-of-vectors $$X_i$$ in $$D$$ into a *sketch*, which we denote $$S(X_i)$$. Sketches are data structures that allow us to estimate a specific quantity faster (or in less memory) that a brute force approach. Preindexing means that we can index $$X_i$$ into a sketch one time, and then use it many times. DESSERT's sketch in particular, which we denote here $$S(X_i)$$, allows us to compute an estimate of the similarities between any query vector $$q$$ and each $$x_j$$ in the original set $$X_i$$. We call this operation a "query" of the sketch $$S(X_i)$$, so in other words we can query $$S(X_i)$$ with a vector $$q$$ to get a list of estimates $$\hat{sim}(q, x_j): x_j \in X_i$$. 
+
+Aha! This query operation returns a set of similarities similar to the form for $$f$$ above. In fact, when $$f$$ is of the form above, we can use DESSERT to estimate $$f(Q, X_i)$$ for any vector set $$Q$$. To see how, say we are given a query vector set $$Q$$. We can query $$S(x_i)$$ with each $$q_k$$ in $$Q$$ to get a list of approximate similarities for each $$q_k$$: $$sim(q_k, x_j): x_j \in X_i$$. We then apply $$A_2$$ to each of these lists of estimates for each $$q_k$$ to get a single value for each $$q_k$$, and then apply $$A_1$$ to these single values to get a final estimate $$s_i$$ for the set relevance score. To solve the set of vector search problem with DESSERT, we create a sketch for $$S(X_i)$$ for all $$X_i \in D$$. Then, given a query set $$Q$$, we query $$S(X_i)$$ and compute $$s_i$$ for each set, and then return the set(s) with the highest scores. 
+
+<img src="/assets/images/zoomed out.svg" style="display:block; margin-left: auto; margin-right: auto;" width="300">
+
+
+There are a couple of things we're glossing over here. The first is how $$S(X_i)$$ works. The second is proving the procedure actually returns the sets maximizing the set relevance score. For more information on both, check out our paper!
+
+## Footnotes: 
+
+[^1]: Unlike traditional near neighbor search, where the similarity function is usually the inverse of a formal distance [metric](https://en.wikipedia.org/wiki/Metric_space), we don't require our similarity function to relate to a formal distance function, since this requirement is more restrictive in this extended problem. One example of a metric over vector sets might be replacing each set with its average vector and then reducing to the Euclidean metric.
+[^2]: In fact, since the set similarity function isn't a metric, we can express ideas we simply cannot in a traditional vector embedding space: document $$A$$ can be similar to document $$B$$, document $$B$$ can be similar to document $$C$$, and document $$A$$ can be extremely dissimilar to document $$C$$.
