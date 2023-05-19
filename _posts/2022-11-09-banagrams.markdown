@@ -6,10 +6,9 @@ permalink: /bananagrams/
 last_modified_at: 2022-12-11
 ---
 
-Have you ever wondered if [Bananagrams](https://bananagrams.com/) is NP-complete? No? Well I think it is, and I'll prove it! 
+Have you ever wondered if [Bananagrams](https://bananagrams.com/) is NP-complete?
 
-In this post we'll dive in to an abstract version of the game Bananagrams, prove it is NP-complete, and discuss some future extensions.
-
+In this post we'll dive in to an abstract version of the game Bananagrams, and prove it is NP-complete!
 # The Bananagrams Decision Problem
 
 We will be interested in a simplified, abstract version of Bananagrams. Assume we are given $$N$$ tiles, where each tile can be any "letter" from an alphabet of unique letters $$V$$. We can represent these tiles with a multiset $$M$$, so $$\lvert M \rvert = N$$. Consider a dictionary $$D$$ of ordered sequences of letters ("words"), where each letter is also from $$V$$. We define a Bananagram decision problem $$B(M, D)$$ to be the following: is it possible to make a two dimensional crossword-style grid that uses all tiles from $$M$$ exactly once, such that each contiguous group of letters in the grid going left to right or top to bottom is in $$D$$?
