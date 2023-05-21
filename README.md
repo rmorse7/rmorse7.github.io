@@ -1,1 +1,1 @@
-Code for: https://www.richardmorse.bio/
+Code for: http://www.richardmorse.bio/
